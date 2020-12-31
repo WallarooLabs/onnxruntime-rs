@@ -160,9 +160,8 @@ fn g_ort() -> sys::OrtApi {
 }
 
 fn char_p_to_string(raw: *const i8) -> Result<String> {
-    let c_string = unsafe { std::ffi::CString::from_raw(raw as *mut i8) };
-
-    match c_string.into_string() {
+    let c_string = unsafe { std::ffi::CStr::from_ptr(raw as *mut i8) };
+    match c_string.to_str().map(|s| s.to_owned()) {
         Ok(string) => Ok(string),
         Err(e) => Err(OrtApiError::IntoStringError(e)),
     }

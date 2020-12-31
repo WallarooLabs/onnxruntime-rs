@@ -121,7 +121,7 @@ pub enum OrtApiError {
     Msg(String),
     /// Details as reported by the ONNX C API in case of error cannot be converted to UTF-8
     #[error("Error calling ONNX Runtime C function and failed to convert error message to UTF-8")]
-    IntoStringError(std::ffi::IntoStringError),
+    IntoStringError(std::str::Utf8Error),
 }
 
 /// Error from downloading pre-trained model from the [ONNX Model Zoo](https://github.com/onnx/models).
