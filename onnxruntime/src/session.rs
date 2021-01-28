@@ -530,10 +530,6 @@ impl<'a> Session<'a> {
                 "Different input lengths: {:?} vs {:?}",
                 self.inputs, input_arrays
             );
-            panic!(
-                "Different input lengths: {:?} vs {:?}",
-                self.inputs, input_arrays
-            );
         }
 
         // Verify shape of each individual inputs
@@ -547,10 +543,6 @@ impl<'a> Session<'a> {
         });
         if inputs_different_shape {
             error!(
-                "Different input lengths: {:?} vs {:?}",
-                self.inputs, input_arrays
-            );
-            panic!(
                 "Different input lengths: {:?} vs {:?}",
                 self.inputs, input_arrays
             );
