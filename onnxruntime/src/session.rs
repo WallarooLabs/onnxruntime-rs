@@ -518,6 +518,19 @@ impl<'a> Session<'a> {
                 "Different input lengths: {:?} vs {:?}",
                 self.inputs, input_arrays
             );
+            return Err(OrtError::NonMatchingDimensions(
+                NonMatchingDimensionsError::InputsLength {
+                    inference_input: input_arrays
+                        .iter()
+                        .map(|input_array| input_array.shape().to_vec())
+                        .collect(),
+                    model_input: self
+                        .inputs
+                        .iter()
+                        .map(|input| input.dimensions.clone())
+                        .collect(),
+                },
+            ));
         }
 
         // Verify shape of each individual inputs
@@ -534,6 +547,19 @@ impl<'a> Session<'a> {
                 "Different input lengths: {:?} vs {:?}",
                 self.inputs, input_arrays
             );
+            return Err(OrtError::NonMatchingDimensions(
+                NonMatchingDimensionsError::InputsLength {
+                    inference_input: input_arrays
+                        .iter()
+                        .map(|input_array| input_array.shape().to_vec())
+                        .collect(),
+                    model_input: self
+                        .inputs
+                        .iter()
+                        .map(|input| input.dimensions.clone())
+                        .collect(),
+                },
+            ));
         }
 
         Ok(())
