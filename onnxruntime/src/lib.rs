@@ -119,7 +119,7 @@ to download.
 //! example for more details.
 
 use std::{
-    ffi, ptr,
+    ptr,
     sync::{atomic::AtomicPtr, Arc, Mutex},
 };
 

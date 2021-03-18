@@ -255,3 +255,4 @@ impl_prim_type_from_ort_trait!(i64, Int64);
 impl_prim_type_from_ort_trait!(f64, Double);
 impl_prim_type_from_ort_trait!(u32, Uint32);
 impl_prim_type_from_ort_trait!(u64, Uint64);
+impl_prim_type_from_ort_trait!(std::string::String, String);
