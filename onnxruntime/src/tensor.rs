@@ -184,7 +184,7 @@ impl<T: Utf8Data> TypeToTensorElementDataType for T {
 }
 
 /// Trait used to map onnxruntime types to Rust types
-pub trait TensorDataToType: Sized + fmt::Debug {
+pub trait TensorDataToType: Sized + Clone + fmt::Debug {
     /// The tensor element type that this type can extract from
     fn tensor_element_data_type() -> TensorElementDataType;
 
