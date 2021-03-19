@@ -138,7 +138,7 @@ pub enum NonMatchingDimensionsError {
         inference_input: Vec<Vec<usize>>,
         /// Input dimensions defined in model
         model_input: Vec<Vec<Option<u32>>>,
-    }
+    },
 }
 
 /// Error details when ONNX C API fail
