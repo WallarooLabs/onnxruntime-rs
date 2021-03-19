@@ -170,7 +170,6 @@ fn g_ort() -> sys::OrtApi {
 
 fn char_p_to_string(raw: *const i8) -> Result<String> {
     let c_string = unsafe { ffi::CStr::from_ptr(raw as *mut i8).to_owned() };
-
     match c_string.into_string() {
         Ok(string) => Ok(string),
         Err(e) => Err(OrtApiError::IntoStringError(e)),
