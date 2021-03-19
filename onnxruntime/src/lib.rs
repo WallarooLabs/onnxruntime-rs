@@ -119,7 +119,7 @@ to download.
 //! example for more details.
 
 use std::{
-    ffi, ptr,
+    ptr,
     sync::{atomic::AtomicPtr, Arc, Mutex},
 };
 
@@ -173,7 +173,7 @@ fn char_p_to_string(raw: *const i8) -> Result<String> {
 
     match c_string.into_string() {
         Ok(string) => Ok(string),
-        Err(e) => Err(OrtApiError::IntoStringError(e)),
+        Err(e) => Err(OrtApiError::IntoStringError(e.utf8_error())),
     }
     .map_err(OrtError::StringConversion)
 }
@@ -382,7 +382,7 @@ mod test {
 
     #[test]
     fn test_char_p_to_string() {
-        let s = ffi::CString::new("foo").unwrap();
+        let s = std::ffi::CString::new("foo").unwrap();
         let ptr = s.as_c_str().as_ptr();
         assert_eq!("foo", char_p_to_string(ptr).unwrap());
     }
