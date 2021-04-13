@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `String` datatype ([#58](https://github.com/nbigaouette/onnxruntime-rs/pull/58))
+
+## [0.0.11] - 2021-02-22
+
 ### Changed
 
 - Prevent session from being built a temporary environment resulting in segfault ([#46](https://github.com/nbigaouette/onnxruntime-rs/pull/46))
+- Update onnxruntime to 1.6.0 ([#59](https://github.com/nbigaouette/onnxruntime-rs/pull/59))
 
 ### Added
 
@@ -62,7 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial working version
 
-[Unreleased]: https://github.com/nbigaouette/onnxruntime-rs/compare/v0.0.10...HEAD
+[Unreleased]: https://github.com/nbigaouette/onnxruntime-rs/compare/v0.0.11...HEAD
+[0.0.11]: https://github.com/nbigaouette/onnxruntime-rs/compare/v0.0.10...v0.0.11
 [0.0.10]: https://github.com/nbigaouette/onnxruntime-rs/compare/v0.0.9...v0.0.10
 [0.0.9]: https://github.com/nbigaouette/onnxruntime-rs/compare/v0.0.8...v0.0.9
 [0.0.8]: https://github.com/nbigaouette/onnxruntime-rs/compare/v0.0.7...v0.0.8

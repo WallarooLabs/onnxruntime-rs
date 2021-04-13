@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/nbigaouette/onnxruntime-rs/branch/master/graph/badge.svg)](https://codecov.io/gh/nbigaouette/onnxruntime-rs)
 
 This is an attempt at a Rust wrapper for
-[Microsoft's ONNX Runtime](https://github.com/microsoft/onnxruntime) (version 1.5).
+[Microsoft's ONNX Runtime](https://github.com/microsoft/onnxruntime) (version 1.6).
 
 This project consist on two crates:
 
@@ -197,7 +197,7 @@ Then on each platform build with the proper feature flag:
 Prepare the container:
 
 ```sh
-❯ docker run -it --rm --name rustbuilder -v "$PWD":/usr/src/myapp -w /usr/src/myapp rust:1.47.0 /bin/bash
+❯ docker run -it --rm --name rustbuilder -v "$PWD":/usr/src/myapp -w /usr/src/myapp rust:1.50.0 /bin/bash
 ❯ apt-get update
 ❯ apt-get install clang
 ❯ rustup component add rustfmt

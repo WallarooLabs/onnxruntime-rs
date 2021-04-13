@@ -1,6 +1,6 @@
 //! Module containing error definitions.
 
-use std::{io, path::PathBuf};
+use std::{io, path::PathBuf, string};
 
 use thiserror::Error;
 
@@ -53,12 +53,24 @@ pub enum OrtError {
     /// Error occurred when getting ONNX dimensions
     #[error("Failed to get dimensions: {0}")]
     GetDimensions(OrtApiError),
+    /// Error occurred when getting string length
+    #[error("Failed to get string tensor length: {0}")]
+    GetStringTensorDataLength(OrtApiError),
+    /// Error occurred when getting tensor element count
+    #[error("Failed to get tensor element count: {0}")]
+    GetTensorShapeElementCount(OrtApiError),
     /// Error occurred when creating CPU memory information
     #[error("Failed to get dimensions: {0}")]
     CreateCpuMemoryInfo(OrtApiError),
+    /// Error occurred when creating ONNX tensor
+    #[error("Failed to create tensor: {0}")]
+    CreateTensor(OrtApiError),
     /// Error occurred when creating ONNX tensor with specific data
     #[error("Failed to create tensor with data: {0}")]
     CreateTensorWithData(OrtApiError),
+    /// Error occurred when filling a tensor with string data
+    #[error("Failed to fill string tensor: {0}")]
+    FillStringTensor(OrtApiError),
     /// Error occurred when checking if ONNX tensor was properly initialized
     #[error("Failed to check if tensor: {0}")]
     IsTensor(OrtApiError),
@@ -71,6 +83,12 @@ pub enum OrtError {
     /// Error occurred when extracting data from an ONNX tensor into an C array to be used as an `ndarray::ArrayView`
     #[error("Failed to get tensor data: {0}")]
     GetTensorMutableData(OrtApiError),
+    /// Error occurred when extracting string data from an ONNX tensor
+    #[error("Failed to get tensor string data: {0}")]
+    GetStringTensorContent(OrtApiError),
+    /// Error occurred when converting data to a String
+    #[error("Data was not UTF-8: {0}")]
+    StringFromUtf8Error(#[from] string::FromUtf8Error),
 
     /// Error occurred when downloading a pre-trained ONNX model from the [ONNX Model Zoo](https://github.com/onnx/models)
     #[error("Failed to download ONNX model: {0}")]
@@ -120,7 +138,7 @@ pub enum NonMatchingDimensionsError {
         inference_input: Vec<Vec<usize>>,
         /// Input dimensions defined in model
         model_input: Vec<Vec<Option<u32>>>,
-    }
+    },
 }
 
 /// Error details when ONNX C API fail
@@ -132,7 +150,7 @@ pub enum OrtApiError {
     Msg(String),
     /// Details as reported by the ONNX C API in case of error cannot be converted to UTF-8
     #[error("Error calling ONNX Runtime C function and failed to convert error message to UTF-8")]
-    IntoStringError(std::str::Utf8Error),
+    IntoStringError(std::ffi::IntoStringError),
 }
 
 /// Error from downloading pre-trained model from the [ONNX Model Zoo](https://github.com/onnx/models).
@@ -175,10 +193,9 @@ impl From<OrtStatusWrapper> for std::result::Result<(), OrtApiError> {
             match char_p_to_string(raw) {
                 Ok(msg) => Err(OrtApiError::Msg(msg)),
                 Err(err) => match err {
-                    OrtError::StringConversion(e) => match e {
-                        OrtApiError::IntoStringError(e) => Err(OrtApiError::IntoStringError(e)),
-                        _ => unreachable!(),
-                    },
+                    OrtError::StringConversion(OrtApiError::IntoStringError(e)) => {
+                        Err(OrtApiError::IntoStringError(e))
+                    }
                     _ => unreachable!(),
                 },
             }
@@ -191,4 +208,12 @@ pub(crate) fn status_to_result(
 ) -> std::result::Result<(), OrtApiError> {
     let status_wrapper: OrtStatusWrapper = status.into();
     status_wrapper.into()
+}
+
+/// A wrapper around a function on OrtApi that maps the status code into [OrtApiError]
+pub(crate) unsafe fn call_ort<F>(mut f: F) -> std::result::Result<(), OrtApiError>
+where
+    F: FnMut(sys::OrtApi) -> *const sys::OrtStatus,
+{
+    status_to_result(f(g_ort()))
 }
