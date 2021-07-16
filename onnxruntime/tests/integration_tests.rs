@@ -100,12 +100,11 @@ mod download {
 
         // Downloaded model does not have a softmax as final layer; call softmax on second axis
         // and iterate on resulting probabilities, creating an index to later access labels.
-        let output: OrtOwnedTensor<_, _> = outputs[0].try_extract().unwrap();
+        let output: OrtOwnedTensor<f32, _> = outputs[0].try_extract().unwrap();
         let mut probabilities: Vec<(usize, f32)> = output
             .view()
             .softmax(ndarray::Axis(1))
             .into_iter()
-            .copied()
             .enumerate()
             .collect::<Vec<_>>();
         // Sort probabilities so highest is at beginning of vector.
@@ -190,12 +189,11 @@ mod download {
         let outputs: Vec<DynOrtTensor<ndarray::Dim<ndarray::IxDynImpl>>> =
             session.run(input_tensor_values).unwrap();
 
-        let output: OrtOwnedTensor<_, _> = outputs[0].try_extract().unwrap();
+        let output: OrtOwnedTensor<f32, _> = outputs[0].try_extract().unwrap();
         let mut probabilities: Vec<(usize, f32)> = output
             .view()
             .softmax(ndarray::Axis(1))
             .into_iter()
-            .copied()
             .enumerate()
             .collect::<Vec<_>>();
 
