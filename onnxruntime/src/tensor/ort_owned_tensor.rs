@@ -9,7 +9,7 @@ use tracing::debug;
 use onnxruntime_sys as sys;
 
 use crate::{
-    error::call_ort,
+    error::{assert_not_null_pointer, call_ort},
     g_ort,
     memory::MemoryInfo,
     tensor::{TensorData, TensorDataToType, TensorElementDataType},
@@ -103,7 +103,7 @@ where
         } else {
             // Note: Both tensor and array will point to the same data, nothing is copied.
             // As such, there is no need to free the pointer used to create the ArrayView.
-            assert_ne!(self.tensor_ptr_holder.tensor_ptr, ptr::null_mut());
+            assert_not_null_pointer(self.tensor_ptr_holder.tensor_ptr, "Tensor")?;
 
             let mut is_tensor = 0;
             unsafe {
@@ -112,7 +112,9 @@ where
                 })
             }
             .map_err(OrtError::IsTensor)?;
-            assert_eq!(is_tensor, 1);
+            (is_tensor == 1)
+                .then(|| ())
+                .ok_or(OrtError::IsTensorCheck)?;
 
             let data = T::extract_data(
                 self.shape.clone(),

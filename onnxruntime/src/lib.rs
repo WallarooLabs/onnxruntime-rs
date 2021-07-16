@@ -285,6 +285,7 @@ pub enum LoggingLevel {
     Fatal = sys::OrtLoggingLevel::ORT_LOGGING_LEVEL_FATAL as OnnxEnumInt,
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<sys::OrtLoggingLevel> for LoggingLevel {
     fn into(self) -> sys::OrtLoggingLevel {
         match self {
@@ -315,6 +316,7 @@ pub enum GraphOptimizationLevel {
     All = sys::GraphOptimizationLevel::ORT_ENABLE_ALL as OnnxEnumInt,
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<sys::GraphOptimizationLevel> for GraphOptimizationLevel {
     fn into(self) -> sys::GraphOptimizationLevel {
         use GraphOptimizationLevel::*;
@@ -338,6 +340,7 @@ pub enum AllocatorType {
     Arena = sys::OrtAllocatorType::OrtArenaAllocator as i32,
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<sys::OrtAllocatorType> for AllocatorType {
     fn into(self) -> sys::OrtAllocatorType {
         use AllocatorType::*;
@@ -363,6 +366,7 @@ pub enum MemType {
     Default = sys::OrtMemType::OrtMemTypeDefault as i32,
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<sys::OrtMemType> for MemType {
     fn into(self) -> sys::OrtMemType {
         use MemType::*;
