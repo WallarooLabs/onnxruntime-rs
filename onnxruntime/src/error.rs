@@ -253,3 +253,31 @@ where
 {
     status_to_result(f(g_ort()))
 }
+
+#[cfg(test)]
+mod test {
+
+    use super::{assert_not_null_pointer, assert_null_pointer};
+
+    #[test]
+    fn test_assert_null_pointer_when_null() {
+        assert!(assert_null_pointer::<u32>(std::ptr::null(), "TestPointer").is_ok())
+    }
+
+    #[test]
+    fn test_assert_null_pointer_when_not_null() {
+        let f = 5;
+        assert!(assert_null_pointer::<u32>(std::ptr::addr_of!(f), "TestPointer").is_err())
+    }
+
+    #[test]
+    fn test_assert_not_null_pointer_when_null() {
+        assert!(assert_not_null_pointer::<u32>(std::ptr::null(), "TestPointer").is_err())
+    }
+
+    #[test]
+    fn test_assert_not_null_pointer_when_not_null() {
+        let f = 5;
+        assert!(assert_not_null_pointer::<u32>(std::ptr::addr_of!(f), "TestPointer").is_ok())
+    }
+}
