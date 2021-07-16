@@ -76,6 +76,7 @@ pub enum TensorElementDataType {
     // Bfloat16 = sys::ONNXTensorElementDataType::ONNX_TENSOR_ELEMENT_DATA_TYPE_BFLOAT16 as OnnxEnumInt,
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<sys::ONNXTensorElementDataType> for TensorElementDataType {
     fn into(self) -> sys::ONNXTensorElementDataType {
         use TensorElementDataType::*;

@@ -112,6 +112,30 @@ pub enum OrtError {
     /// Attempt to build a Rust `CString` from a null pointer
     #[error("Failed to build CString when original contains null: {0}")]
     CStringNulError(#[from] std::ffi::NulError),
+    #[error("{0} pointer should be null")]
+    /// Ort Pointer should have been null
+    PointerShouldBeNull(String),
+    /// Ort pointer should not have been null
+    #[error("{0} pointer should not be null")]
+    PointerShouldNotBeNull(String),
+    /// Model has invalid dimensions
+    #[error("Invalid dimensions")]
+    InvalidDimensions,
+    /// The runtime type was undefined
+    #[error("Undefined Runtime Type")]
+    UndefinedRuntimeType,
+    /// Unable to call GetInputTypeInfo in the ORT
+    #[error("Failed to get input info")]
+    GetInputTypeInfo,
+    /// Unable to call GetOutputTypeInfo in the ORT
+    #[error("Failed to get output info")]
+    GetOutputTypeInfo,
+    /// Unable to call CastTypeInfoToTensorInfo in the ORT
+    #[error("Failed to cast type info to tensor info")]
+    CastTypeInfoToTensorInfoError,
+    /// Unable to release the type info
+    #[error("Failed to release info")]
+    ReleaseTypeInfo,
 }
 
 /// Error used when dimensions of input (from model and from inference call)
@@ -184,6 +208,18 @@ impl From<*const sys::OrtStatus> for OrtStatusWrapper {
     }
 }
 
+pub(crate) fn assert_null_pointer<T>(ptr: *const T, name: &str) -> Result<()> {
+    ptr.is_null()
+        .then(|| ())
+        .ok_or_else(|| OrtError::PointerShouldBeNull(name.to_owned()))
+}
+
+pub(crate) fn assert_not_null_pointer<T>(ptr: *const T, name: &str) -> Result<()> {
+    (!ptr.is_null())
+        .then(|| ())
+        .ok_or_else(|| OrtError::PointerShouldBeNull(name.to_owned()))
+}
+
 impl From<OrtStatusWrapper> for std::result::Result<(), OrtApiError> {
     fn from(status: OrtStatusWrapper) -> Self {
         if status.0.is_null() {
@@ -216,4 +252,32 @@ where
     F: FnMut(sys::OrtApi) -> *const sys::OrtStatus,
 {
     status_to_result(f(g_ort()))
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::{assert_not_null_pointer, assert_null_pointer};
+
+    #[test]
+    fn test_assert_null_pointer_when_null() {
+        assert!(assert_null_pointer::<u32>(std::ptr::null(), "TestPointer").is_ok())
+    }
+
+    #[test]
+    fn test_assert_null_pointer_when_not_null() {
+        let f = 5;
+        assert!(assert_null_pointer::<u32>(std::ptr::addr_of!(f), "TestPointer").is_err())
+    }
+
+    #[test]
+    fn test_assert_not_null_pointer_when_null() {
+        assert!(assert_not_null_pointer::<u32>(std::ptr::null(), "TestPointer").is_err())
+    }
+
+    #[test]
+    fn test_assert_not_null_pointer_when_not_null() {
+        let f = 5;
+        assert!(assert_not_null_pointer::<u32>(std::ptr::addr_of!(f), "TestPointer").is_ok())
+    }
 }
