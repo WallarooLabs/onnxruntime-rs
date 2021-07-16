@@ -227,6 +227,28 @@ where
 /// Implements `OwnedTensorDataToType` for primitives, which can use `GetTensorMutableData`
 macro_rules! impl_prim_type_from_ort_trait {
     ($type_:ty, $variant:ident) => {
+        impl TensorDataToType for &$type_ {
+            fn tensor_element_data_type() -> TensorElementDataType {
+                TensorElementDataType::$variant
+            }
+
+            fn extract_data<'t, D>(
+                shape: D,
+                _tensor_element_len: usize,
+                tensor_ptr: rc::Rc<TensorPointerHolder>,
+            ) -> Result<TensorData<'t, Self, D>>
+            where
+                D: ndarray::Dimension,
+            {
+                extract_primitive_array(shape, tensor_ptr.tensor_ptr).map(|v| {
+                    TensorData::TensorPtr {
+                        ptr: tensor_ptr,
+                        array_view: v,
+                    }
+                })
+            }
+        }
+
         impl TensorDataToType for $type_ {
             fn tensor_element_data_type() -> TensorElementDataType {
                 TensorElementDataType::$variant
