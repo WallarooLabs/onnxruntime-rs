@@ -668,11 +668,9 @@ mod dangerous {
         let status = unsafe { f(session_ptr, &mut num_nodes) };
         status_to_result(status).map_err(OrtError::InOutCount)?;
         assert_null_pointer(status, "SessionStatus")?;
-        (num_nodes != 0)
-            .then(|| ())
-            .ok_or(OrtError::InOutCount(OrtApiError::Msg(
-                "No nodes in model".to_owned(),
-            )))?;
+        (num_nodes != 0).then(|| ()).ok_or_else(|| {
+            OrtError::InOutCount(OrtApiError::Msg("No nodes in model".to_owned()))
+        })?;
         assert_ne!(num_nodes, 0);
         Ok(num_nodes)
     }
