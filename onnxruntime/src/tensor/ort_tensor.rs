@@ -8,7 +8,7 @@ use tracing::{debug, error};
 use onnxruntime_sys as sys;
 
 use crate::{
-    error::{call_ort, status_to_result},
+    error::{assert_not_null_pointer, call_ort, status_to_result},
     g_ort,
     memory::MemoryInfo,
     tensor::{ndarray_tensor::NdArrayTensor, TensorElementDataType, TypeToTensorElementDataType},
@@ -69,7 +69,7 @@ where
                 // onnxruntime as is
                 let tensor_values_ptr: *mut std::ffi::c_void =
                     array.as_mut_ptr() as *mut std::ffi::c_void;
-                assert_ne!(tensor_values_ptr, std::ptr::null_mut());
+                assert_not_null_pointer(tensor_values_ptr, "TensorValues")?;
 
                 unsafe {
                     call_ort(|ort| {
@@ -85,7 +85,7 @@ where
                     })
                 }
                 .map_err(OrtError::CreateTensorWithData)?;
-                assert_ne!(tensor_ptr, std::ptr::null_mut());
+                assert_not_null_pointer(tensor_ptr, "Tensor")?;
 
                 let mut is_tensor = 0;
                 let status = unsafe { g_ort().IsTensor.unwrap()(tensor_ptr, &mut is_tensor) };
@@ -136,7 +136,7 @@ where
             }
         }
 
-        assert_ne!(tensor_ptr, std::ptr::null_mut());
+        assert_not_null_pointer(tensor_ptr, "Tensor")?;
 
         Ok(OrtTensor {
             c_ptr: tensor_ptr,
