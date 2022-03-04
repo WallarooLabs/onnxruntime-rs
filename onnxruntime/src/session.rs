@@ -384,19 +384,24 @@ impl<'a> Session<'a> {
         self.validate_input_shapes(&input_arrays)?;
 
         // Build arguments to Run()
-
-        let input_names: Vec<String> = self.inputs.iter().map(|input| input.name.clone()).collect();
-        let input_names_cstring = input_names
+        let input_names_cstring: Vec<CString> = self
+            .inputs
             .iter()
-            .cloned()
-            .map(|n| CString::new(n).unwrap());
+            .map(|input| CString::new(input.name.clone()).unwrap())
+            .collect();
+
         let input_names_ptr: Vec<*const i8> = input_names_cstring
+            .into_iter()
             .map(|n| n.into_raw() as *const i8)
             .collect();
 
-        let output_names = self.outputs.iter().map(|output| output.name.clone());
-        let output_names_cstring = output_names.map(|n| CString::new(n).unwrap());
+        let output_names_cstring: Vec<CString> = self
+            .outputs
+            .iter()
+            .map(|output| CString::new(output.name.clone()).unwrap())
+            .collect();
         let output_names_ptr: Vec<*const i8> = output_names_cstring
+            .iter()
             .map(|n| n.as_ptr() as *const i8)
             .collect();
 
