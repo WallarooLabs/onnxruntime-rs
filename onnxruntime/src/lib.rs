@@ -285,10 +285,9 @@ pub enum LoggingLevel {
     Fatal = sys::OrtLoggingLevel::ORT_LOGGING_LEVEL_FATAL as OnnxEnumInt,
 }
 
-#[allow(clippy::from-over-into)]
-impl Into<sys::OrtLoggingLevel> for LoggingLevel {
-    fn into(self) -> sys::OrtLoggingLevel {
-        match self {
+impl From<LoggingLevel> for sys::OrtLoggingLevel {
+    fn from(level: LoggingLevel) -> sys::OrtLoggingLevel {
+        match level {
             LoggingLevel::Verbose => sys::OrtLoggingLevel::ORT_LOGGING_LEVEL_VERBOSE,
             LoggingLevel::Info => sys::OrtLoggingLevel::ORT_LOGGING_LEVEL_INFO,
             LoggingLevel::Warning => sys::OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING,
@@ -316,11 +315,10 @@ pub enum GraphOptimizationLevel {
     All = sys::GraphOptimizationLevel::ORT_ENABLE_ALL as OnnxEnumInt,
 }
 
-#[allow(clippy::from-over-into)]
-impl Into<sys::GraphOptimizationLevel> for GraphOptimizationLevel {
-    fn into(self) -> sys::GraphOptimizationLevel {
+impl From<GraphOptimizationLevel> for sys::GraphOptimizationLevel {
+    fn from(level: GraphOptimizationLevel) -> sys::GraphOptimizationLevel {
         use GraphOptimizationLevel::*;
-        match self {
+        match level {
             DisableAll => sys::GraphOptimizationLevel::ORT_DISABLE_ALL,
             Basic => sys::GraphOptimizationLevel::ORT_ENABLE_BASIC,
             Extended => sys::GraphOptimizationLevel::ORT_ENABLE_EXTENDED,

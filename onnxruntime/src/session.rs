@@ -399,12 +399,8 @@ impl<'a> Session<'a> {
             .iter()
             .map(|output| output.name.clone())
             .collect();
-        let output_names_cstring: Vec<CString> = output_names
-            .into_iter()
-            .map(|n| CString::new(n).unwrap())
-            .collect();
+        let output_names_cstring = output_names.into_iter().map(|n| CString::new(n).unwrap());
         let output_names_ptr: Vec<*const i8> = output_names_cstring
-            .iter()
             .map(|n| n.as_ptr() as *const i8)
             .collect();
 
