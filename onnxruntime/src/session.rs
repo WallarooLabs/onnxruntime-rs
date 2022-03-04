@@ -292,6 +292,7 @@ impl<'a> SessionBuilder<'a> {
 /// Type storing the session information, built from an [`Environment`](environment/struct.Environment.html)
 #[derive(Debug)]
 pub struct Session<'a> {
+    #[allow(dead_code)]
     env: &'a Environment,
     session_ptr: *mut sys::OrtSession,
     allocator_ptr: *mut sys::OrtAllocator,
@@ -385,13 +386,11 @@ impl<'a> Session<'a> {
         // Build arguments to Run()
 
         let input_names: Vec<String> = self.inputs.iter().map(|input| input.name.clone()).collect();
-        let input_names_cstring: Vec<CString> = input_names
+        let input_names_cstring = input_names
             .iter()
             .cloned()
-            .map(|n| CString::new(n).unwrap())
-            .collect();
+            .map(|n| CString::new(n).unwrap());
         let input_names_ptr: Vec<*const i8> = input_names_cstring
-            .into_iter()
             .map(|n| n.into_raw() as *const i8)
             .collect();
 

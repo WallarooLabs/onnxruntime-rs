@@ -285,6 +285,7 @@ pub enum LoggingLevel {
     Fatal = sys::OrtLoggingLevel::ORT_LOGGING_LEVEL_FATAL as OnnxEnumInt,
 }
 
+#[allow(clippy::from-over-into)]
 impl Into<sys::OrtLoggingLevel> for LoggingLevel {
     fn into(self) -> sys::OrtLoggingLevel {
         match self {
@@ -315,6 +316,7 @@ pub enum GraphOptimizationLevel {
     All = sys::GraphOptimizationLevel::ORT_ENABLE_ALL as OnnxEnumInt,
 }
 
+#[allow(clippy::from-over-into)]
 impl Into<sys::GraphOptimizationLevel> for GraphOptimizationLevel {
     fn into(self) -> sys::GraphOptimizationLevel {
         use GraphOptimizationLevel::*;
