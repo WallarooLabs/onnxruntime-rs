@@ -384,6 +384,7 @@ impl<'a> Session<'a> {
         self.validate_input_shapes(&input_arrays)?;
 
         // Build arguments to Run()
+        #[allow(clippy::needless_collect)]
         let input_names_cstring: Vec<CString> = self
             .inputs
             .iter()
@@ -395,6 +396,7 @@ impl<'a> Session<'a> {
             .map(|n| n.into_raw() as *const i8)
             .collect();
 
+        #[allow(clippy::needless_collect)]
         let output_names_cstring: Vec<CString> = self
             .outputs
             .iter()
