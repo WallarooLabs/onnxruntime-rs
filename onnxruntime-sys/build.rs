@@ -11,7 +11,7 @@ use std::{
 /// WARNING: If version is changed, bindings for all platforms will have to be re-generated.
 ///          To do so, run this:
 ///              cargo build --package onnxruntime-sys --features generate-bindings
-const ORT_VERSION: &str = "1.6.0";
+const ORT_VERSION: &str = "1.10.0";
 
 /// Base Url from which to download pre-built releases/
 const ORT_RELEASE_BASE_URL: &str = "https://github.com/microsoft/onnxruntime/releases/download";
@@ -196,7 +196,13 @@ fn prebuilt_archive_url() -> (PathBuf, String) {
     };
 
     let arch_str = match arch.as_str() {
-        "x86_64" => "x64",
+        "x86_64" => {
+            if os.as_str() == "macos" {
+                "x86_64"
+            } else {
+                "x64"
+            }
+        }
         "x86" => "x86",
         unsupported => panic!("Unsupported architecture {:?}", unsupported),
     };

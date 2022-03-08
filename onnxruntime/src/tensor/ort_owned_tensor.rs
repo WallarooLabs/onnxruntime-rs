@@ -49,6 +49,7 @@ where
     // TODO could this also hold a Vec<u8> for strings so that the extracted tensor could then
     // hold a Vec<&str>?
     tensor_ptr_holder: rc::Rc<TensorPointerHolder>,
+    #[allow(dead_code)]
     memory_info: &'m MemoryInfo,
     shape: D,
     tensor_element_len: usize,

@@ -230,7 +230,7 @@ impl ModelUrl for ImageClassification {
     fn fetch_url(&self) -> &'static str {
         match self {
             ImageClassification::MobileNet => "https://github.com/onnx/models/raw/master/vision/classification/mobilenet/model/mobilenetv2-7.onnx",
-            ImageClassification::SqueezeNet => "https://github.com/onnx/models/raw/master/vision/classification/squeezenet/model/squeezenet1.1-7.onnx",
+            ImageClassification::SqueezeNet => "https://github.com/onnx/models/raw/main/vision/classification/squeezenet/model/squeezenet1.1-7.onnx",
             ImageClassification::Inception(version) => version.fetch_url(),
             ImageClassification::ResNet(version) => version.fetch_url(),
             ImageClassification::Vgg(variant) => variant.fetch_url(),

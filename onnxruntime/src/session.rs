@@ -292,6 +292,7 @@ impl<'a> SessionBuilder<'a> {
 /// Type storing the session information, built from an [`Environment`](environment/struct.Environment.html)
 #[derive(Debug)]
 pub struct Session<'a> {
+    #[allow(dead_code)]
     env: &'a Environment,
     session_ptr: *mut sys::OrtSession,
     allocator_ptr: *mut sys::OrtAllocator,
@@ -383,26 +384,23 @@ impl<'a> Session<'a> {
         self.validate_input_shapes(&input_arrays)?;
 
         // Build arguments to Run()
-
-        let input_names: Vec<String> = self.inputs.iter().map(|input| input.name.clone()).collect();
-        let input_names_cstring: Vec<CString> = input_names
+        #[allow(clippy::needless_collect)]
+        let input_names_cstring: Vec<CString> = self
+            .inputs
             .iter()
-            .cloned()
-            .map(|n| CString::new(n).unwrap())
+            .map(|input| CString::new(input.name.clone()).unwrap())
             .collect();
+
         let input_names_ptr: Vec<*const i8> = input_names_cstring
             .into_iter()
             .map(|n| n.into_raw() as *const i8)
             .collect();
 
-        let output_names: Vec<String> = self
+        #[allow(clippy::needless_collect)]
+        let output_names_cstring: Vec<CString> = self
             .outputs
             .iter()
-            .map(|output| output.name.clone())
-            .collect();
-        let output_names_cstring: Vec<CString> = output_names
-            .into_iter()
-            .map(|n| CString::new(n).unwrap())
+            .map(|output| CString::new(output.name.clone()).unwrap())
             .collect();
         let output_names_ptr: Vec<*const i8> = output_names_cstring
             .iter()
