@@ -2,6 +2,8 @@ use tracing::debug;
 
 use onnxruntime_sys as sys;
 
+use tracing::error;
+
 use crate::{
     error::{assert_not_null_pointer, status_to_result, OrtError, Result},
     g_ort, AllocatorType, MemType,

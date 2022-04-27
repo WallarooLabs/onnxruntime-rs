@@ -5,6 +5,9 @@ use std::{
     time::Duration,
 };
 
+use onnxruntime::error::OrtDownloadError;
+use onnxruntime::tensor::OrtOwnedTensor;
+
 mod download {
     use super::*;
 
@@ -100,11 +103,11 @@ mod download {
 
         // Downloaded model does not have a softmax as final layer; call softmax on second axis
         // and iterate on resulting probabilities, creating an index to later access labels.
-        let output: OrtOwnedTensor<f32, _> = outputs[0].try_extract().unwrap();
+        let output: &OrtOwnedTensor<f32, _> = &outputs[0];
         let mut probabilities: Vec<(usize, f32)> = output
-            .view()
             .softmax(ndarray::Axis(1))
-            .into_iter()
+            .iter()
+            .copied()
             .enumerate()
             .collect::<Vec<_>>();
         // Sort probabilities so highest is at beginning of vector.
@@ -189,11 +192,11 @@ mod download {
         let outputs: Vec<DynOrtTensor<ndarray::Dim<ndarray::IxDynImpl>>> =
             session.run(input_tensor_values).unwrap();
 
-        let output: OrtOwnedTensor<f32, _> = outputs[0].try_extract().unwrap();
+        let output: &OrtOwnedTensor<f32, _> = &outputs[0];
         let mut probabilities: Vec<(usize, f32)> = output
-            .view()
             .softmax(ndarray::Axis(1))
-            .into_iter()
+            .iter()
+            .copied()
             .enumerate()
             .collect::<Vec<_>>();
 
@@ -284,28 +287,29 @@ mod download {
         let input_tensor_values = vec![array];
 
         // Perform the inference
-        let outputs: Vec<DynOrtTensor<ndarray::Dim<ndarray::IxDynImpl>>> =
-            session.run(input_tensor_values).unwrap();
+        let outputs: Vec<
+            onnxruntime::tensor::OrtOwnedTensor<f32, ndarray::Dim<ndarray::IxDynImpl>>,
+        > = session.run(input_tensor_values).unwrap();
 
         assert_eq!(outputs.len(), 1);
-        let output: OrtOwnedTensor<'_, f32, ndarray::Dim<ndarray::IxDynImpl>> =
-            outputs[0].try_extract().unwrap();
+        let output = &outputs[0];
 
         // The image should have doubled in size
-        assert_eq!(output.view().shape(), [1, 448, 448, 3]);
+        assert_eq!(output.shape(), [1, 448, 448, 3]);
     }
 }
 
-fn get_imagenet_labels() -> Result<Vec<String>, io::Error> {
+fn get_imagenet_labels() -> Result<Vec<String>, OrtDownloadError> {
     // Download the ImageNet class labels, matching SqueezeNet's classes.
     let labels_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("synset.txt");
     if !labels_path.exists() {
         let url = "https://s3.amazonaws.com/onnx-model-zoo/synset.txt";
         println!("Downloading {:?} to {:?}...", url, labels_path);
         let resp = ureq::get(url)
-            .timeout_connect(1_000) // 1 second
             .timeout(Duration::from_secs(180)) // 3 minutes
-            .call();
+            .call()
+            .map_err(Box::new)
+            .map_err(OrtDownloadError::UreqError)?;
 
         assert!(resp.has("Content-Length"));
         let len = resp
@@ -325,5 +329,7 @@ fn get_imagenet_labels() -> Result<Vec<String>, io::Error> {
     }
     let file = BufReader::new(fs::File::open(labels_path).unwrap());
 
-    file.lines().collect()
+    file.lines()
+        .map(|line| line.map_err(|io_err| OrtDownloadError::IoError(io_err)))
+        .collect()
 }
