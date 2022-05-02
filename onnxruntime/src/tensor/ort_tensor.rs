@@ -11,8 +11,8 @@ use crate::{
     error::{assert_not_null_pointer, call_ort, status_to_result},
     g_ort,
     memory::MemoryInfo,
-    tensor::ndarray_tensor::NdArrayTensor,
-    OrtError, Result, TensorElementDataType, TypeToTensorElementDataType,
+    tensor::{ndarray_tensor::NdArrayTensor, TensorElementDataType, TypeToTensorElementDataType},
+    OrtError, Result,
 };
 
 /// Owned tensor, backed by an [`ndarray::Array`](https://docs.rs/ndarray/latest/ndarray/type.Array.html)
@@ -199,7 +199,7 @@ mod tests {
     use crate::{AllocatorType, MemType};
     use ndarray::{arr0, arr1, arr2, arr3};
     use std::ptr;
-    use test_env_log::test;
+    use test_log::test;
 
     #[test]
     fn orttensor_from_array_0d_i32() {

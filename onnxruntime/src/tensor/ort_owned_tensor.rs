@@ -183,36 +183,18 @@ where
     where
         't: 's, // underlying tensor ptr lives at least as long as TensorData
     {
-        // Note: Both tensor and array will point to the same data, nothing is copied.
-        // As such, there is no need too free the pointer used to create the ArrayView.
-
-        assert_ne!(self.tensor_ptr, std::ptr::null_mut());
-
-        let mut is_tensor = 0;
-        let status = unsafe { g_ort().IsTensor.unwrap()(self.tensor_ptr, &mut is_tensor) };
-        status_to_result(status).map_err(OrtError::IsTensor)?;
-        (is_tensor == 1)
-            .then(|| ())
-            .ok_or(OrtError::IsTensorCheck)?;
-
-        // Get pointer to output tensor float values
-        let mut output_array_ptr: *mut T = std::ptr::null_mut();
-        let output_array_ptr_ptr: *mut *mut T = &mut output_array_ptr;
-        let output_array_ptr_ptr_void: *mut *mut std::ffi::c_void =
-            output_array_ptr_ptr as *mut *mut std::ffi::c_void;
-        let status = unsafe {
-            g_ort().GetTensorMutableData.unwrap()(self.tensor_ptr, output_array_ptr_ptr_void)
-        };
-        status_to_result(status).map_err(OrtError::IsTensor)?;
-        assert_ne!(output_array_ptr, std::ptr::null_mut());
-
-        let array_view = unsafe { ArrayView::from_shape_ptr(self.shape, output_array_ptr) };
-
-        Ok(OrtOwnedTensor {
-            tensor_ptr: self.tensor_ptr,
-            array_view,
-            memory_info: self.memory_info,
-        })
+        match data {
+            TensorData::TensorPtr { array_view, .. } => ViewHolder {
+                // we already have a view, but creating a view from a view is cheap
+                array_view: array_view.view(),
+            },
+            TensorData::Strings { strings } => ViewHolder {
+                // This view creation has to happen here, not at new()'s callsite, because
+                // a field can't be a reference to another field in the same struct. Thus, we have
+                // this separate struct to hold the view that refers to the `Array`.
+                array_view: strings.view(),
+            },
+        }
     }
 }
 

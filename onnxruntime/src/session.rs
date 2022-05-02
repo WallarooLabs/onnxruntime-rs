@@ -1,6 +1,6 @@
 //! Module containing session types
 
-use std::{convert::TryInto as _, ffi::CString, fmt::Debug, path::Path};
+use std::{ffi::CString, fmt::Debug, path::Path};
 
 #[cfg(not(target_family = "windows"))]
 use std::os::unix::ffi::OsStrExt;
@@ -19,8 +19,8 @@ use crate::{
     char_p_to_string,
     environment::Environment,
     error::{
-        assert_not_null_pointer, assert_null_pointer, status_to_result, NonMatchingDimensionsError,
-        OrtApiError, OrtError, Result,
+        assert_not_null_pointer, assert_null_pointer, call_ort, status_to_result,
+        NonMatchingDimensionsError, OrtApiError, OrtError, Result,
     },
     g_ort,
     memory::MemoryInfo,
@@ -384,12 +384,10 @@ impl<'a> Session<'a> {
         self.validate_input_shapes(&input_arrays)?;
 
         // Build arguments to Run()
-
         let input_names_ptr: Vec<*const i8> = self
             .inputs
             .iter()
-            .map(|input| input.name.clone())
-            .map(|n| CString::new(n).unwrap())
+            .map(|input| CString::new(input.name.clone()).unwrap())
             .map(|n| n.into_raw() as *const i8)
             .collect();
 
@@ -404,7 +402,7 @@ impl<'a> Session<'a> {
             .map(|n| n.as_ptr() as *const i8)
             .collect();
 
-        let mut output_tensor_extractors_ptrs: Vec<*mut sys::OrtValue> =
+        let mut output_tensor_ptrs: Vec<*mut sys::OrtValue> =
             vec![std::ptr::null_mut(); self.outputs.len()];
 
         // The C API expects pointers for the arrays (pointers to C-arrays)
@@ -430,30 +428,47 @@ impl<'a> Session<'a> {
                 input_ort_values.len(),
                 output_names_ptr.as_ptr(),
                 output_names_ptr.len(),
-                output_tensor_extractors_ptrs.as_mut_ptr(),
+                output_tensor_ptrs.as_mut_ptr(),
             )
         };
         status_to_result(status).map_err(OrtError::Run)?;
 
         let memory_info_ref = &self.memory_info;
-        let outputs: Result<Vec<OrtOwnedTensor<TOut, ndarray::Dim<ndarray::IxDynImpl>>>> =
-            output_tensor_extractors_ptrs
+        let outputs: Result<Vec<DynOrtTensor<ndarray::Dim<ndarray::IxDynImpl>>>> =
+            output_tensor_ptrs
                 .into_iter()
-                .map(|ptr| {
-                    let mut tensor_info_ptr: *mut sys::OrtTensorTypeAndShapeInfo =
-                        std::ptr::null_mut();
-                    let status = unsafe {
-                        g_ort().GetTensorTypeAndShape.unwrap()(ptr, &mut tensor_info_ptr as _)
-                    };
-                    status_to_result(status).map_err(OrtError::GetTensorTypeAndShape)?;
-                    let dims = unsafe { get_tensor_dimensions(tensor_info_ptr) };
-                    unsafe { g_ort().ReleaseTensorTypeAndShapeInfo.unwrap()(tensor_info_ptr) };
-                    let dims: Vec<_> = dims?.iter().map(|&n| n as usize).collect();
+                .map(|tensor_ptr| {
+                    let (dims, data_type, len) = unsafe {
+                        call_with_tensor_info(tensor_ptr, |tensor_info_ptr| {
+                            get_tensor_dimensions(tensor_info_ptr)
+                                .map(|dims| dims.iter().map(|&n| n as usize).collect::<Vec<_>>())
+                                .and_then(|dims| {
+                                    extract_data_type(tensor_info_ptr)
+                                        .map(|data_type| (dims, data_type))
+                                })
+                                .and_then(|(dims, data_type)| {
+                                    let mut len = 0_usize;
 
-                    let mut output_tensor_extractor =
-                        OrtOwnedTensorExtractor::new(memory_info_ref, ndarray::IxDyn(&dims));
-                    output_tensor_extractor.tensor_ptr = ptr;
-                    output_tensor_extractor.extract::<TOut>()
+                                    call_ort(|ort| {
+                                        ort.GetTensorShapeElementCount.unwrap()(
+                                            tensor_info_ptr,
+                                            &mut len,
+                                        )
+                                    })
+                                    .map_err(OrtError::GetTensorShapeElementCount)?;
+
+                                    Ok((dims, data_type, len))
+                                })
+                        })
+                    }?;
+
+                    Ok(DynOrtTensor::new(
+                        tensor_ptr,
+                        memory_info_ref,
+                        ndarray::IxDyn(&dims),
+                        len,
+                        data_type,
+                    ))
                 })
                 .collect();
 
@@ -586,6 +601,38 @@ unsafe fn get_tensor_dimensions(
     );
     status_to_result(status).map_err(OrtError::GetDimensions)?;
     Ok(node_dims)
+}
+
+unsafe fn extract_data_type(
+    tensor_info_ptr: *const sys::OrtTensorTypeAndShapeInfo,
+) -> Result<TensorElementDataType> {
+    let mut type_sys = sys::ONNXTensorElementDataType::ONNX_TENSOR_ELEMENT_DATA_TYPE_UNDEFINED;
+    //TODO: Is this unwrap an issue?
+    call_ort(|ort| ort.GetTensorElementType.unwrap()(tensor_info_ptr, &mut type_sys))
+        .map_err(OrtError::TensorElementType)?;
+    (type_sys != sys::ONNXTensorElementDataType::ONNX_TENSOR_ELEMENT_DATA_TYPE_UNDEFINED)
+        .then(|| ())
+        .ok_or(OrtError::UndefinedTensorElementType)?;
+    // This transmute should be safe since its value is read from GetTensorElementType which we must trust.
+    Ok(std::mem::transmute(type_sys))
+}
+
+/// Calls the provided closure with the result of `GetTensorTypeAndShape`, deallocating the
+/// resulting `*OrtTensorTypeAndShapeInfo` before returning.
+unsafe fn call_with_tensor_info<F, T>(tensor_ptr: *const sys::OrtValue, mut f: F) -> Result<T>
+where
+    F: FnMut(*const sys::OrtTensorTypeAndShapeInfo) -> Result<T>,
+{
+    let mut tensor_info_ptr: *mut sys::OrtTensorTypeAndShapeInfo = std::ptr::null_mut();
+    call_ort(|ort| ort.GetTensorTypeAndShape.unwrap()(tensor_ptr, &mut tensor_info_ptr as _))
+        .map_err(OrtError::GetTensorTypeAndShape)?;
+
+    let res = f(tensor_info_ptr);
+
+    // no return code, so no errors to check for
+    g_ort().ReleaseTensorTypeAndShapeInfo.unwrap()(tensor_info_ptr);
+
+    res
 }
 
 /// This module contains dangerous functions working on raw pointers.
