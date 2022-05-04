@@ -35,6 +35,7 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup target install x86_64-unknown-linux-gnu
+      - run: rustup target install aarch64-apple-darwin
       - run: rustup target install x86_64-apple-darwin
       - run: rustup target install i686-pc-windows-msvc
       - run: rustup target install x86_64-pc-windows-msvc
@@ -46,6 +47,14 @@ jobs:
           args: --target x86_64-unknown-linux-gnu
       - name: Verify prebuilt archive downloaded (CPU, x86_64-unknown-linux-gnu)
         run: ls -lh target/x86_64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-1.*.tgz
+      # ******************************************************************
+      - name: Download prebuilt archive (CPU, aarch64-apple-darwin)
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --target aarch64-apple-darwin
+      - name: Verify prebuilt archive downloaded (CPU, aarch64-apple-darwin)
+        run: ls -lh target/aarch64-apple-darwin/debug/build/onnxruntime-sys-*/out/onnxruntime-osx-arm64-1.*.tgz
       # ******************************************************************
       - name: Download prebuilt archive (CPU, x86_64-apple-darwin)
         uses: actions-rs/cargo@v1
@@ -100,6 +109,7 @@ jobs:
         target:
           [
             x86_64-unknown-linux-gnu,
+            aarch64-apple-darwin,
             x86_64-apple-darwin,
             x86_64-pc-windows-msvc,
             i686-pc-windows-msvc,
@@ -108,6 +118,8 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
           - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: xaarch64-apple-darwin
             os: macos-latest
           - target: x86_64-pc-windows-msvc
             os: windows-latest
