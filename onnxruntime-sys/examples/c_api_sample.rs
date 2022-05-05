@@ -103,7 +103,7 @@ fn main() {
     assert_ne!(allocator_ptr, std::ptr::null_mut());
 
     // print number of model input nodes
-    let mut num_input_nodes: onnxruntime_sys::size_t = 0;
+    let mut num_input_nodes: usize = 0;
     let status = unsafe {
         g_ort.as_ref().unwrap().SessionGetInputCount.unwrap()(session_ptr, &mut num_input_nodes)
     };
@@ -255,7 +255,7 @@ fn main() {
             .unwrap()(
             memory_info_ptr,
             input_tensor_values_ptr,
-            (input_tensor_size * std::mem::size_of::<f32>()) as onnxruntime_sys::size_t,
+            input_tensor_size * std::mem::size_of::<f32>(),
             shape,
             4,
             ONNXTensorElementDataType::ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,
@@ -290,7 +290,7 @@ fn main() {
 
     let output_node_names_cstring: Vec<std::ffi::CString> = output_node_names
         .into_iter()
-        .map(|n| std::ffi::CString::new(n.clone()).unwrap())
+        .map(|n| std::ffi::CString::new(n.to_string()).unwrap())
         .collect();
     let output_node_names_ptr: Vec<*const i8> = output_node_names_cstring
         .iter()

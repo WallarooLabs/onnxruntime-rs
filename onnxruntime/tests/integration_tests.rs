@@ -5,18 +5,19 @@ use std::{
     time::Duration,
 };
 
+use onnxruntime::error::OrtDownloadError;
+
 mod download {
     use super::*;
 
     use image::{imageops::FilterType, ImageBuffer, Luma, Pixel, Rgb};
     use ndarray::s;
-    use test_env_log::test;
+    use test_log::test;
 
-    use onnxruntime::tensor::ndarray_tensor::NdArrayTensor;
     use onnxruntime::{
         download::vision::{DomainBasedImageClassification, ImageClassification},
         environment::Environment,
-        tensor::{DynOrtTensor, OrtOwnedTensor},
+        tensor::{ndarray_tensor::NdArrayTensor, DynOrtTensor},
         GraphOptimizationLevel, LoggingLevel,
     };
 
@@ -85,8 +86,8 @@ mod download {
         // Normalize channels to mean=[0.485, 0.456, 0.406] and std=[0.229, 0.224, 0.225]
         let mean = [0.485, 0.456, 0.406];
         let std = [0.229, 0.224, 0.225];
-        for c in 0..3 {
-            let mut channel_array = array.slice_mut(s![0, c, .., ..]);
+        for c in 0usize..3 {
+            let mut channel_array = array.slice_mut(s![0usize, c, .., ..]);
             channel_array -= mean[c];
             channel_array /= std[c];
         }
@@ -100,11 +101,14 @@ mod download {
 
         // Downloaded model does not have a softmax as final layer; call softmax on second axis
         // and iterate on resulting probabilities, creating an index to later access labels.
-        let output: OrtOwnedTensor<f32, _> = outputs[0].try_extract().unwrap();
+        let output: &DynOrtTensor<ndarray::Dim<ndarray::IxDynImpl>> = &outputs[0];
         let mut probabilities: Vec<(usize, f32)> = output
+            .try_extract()
+            .unwrap()
             .view()
             .softmax(ndarray::Axis(1))
-            .into_iter()
+            .iter()
+            .copied()
             .enumerate()
             .collect::<Vec<_>>();
         // Sort probabilities so highest is at beginning of vector.
@@ -189,11 +193,14 @@ mod download {
         let outputs: Vec<DynOrtTensor<ndarray::Dim<ndarray::IxDynImpl>>> =
             session.run(input_tensor_values).unwrap();
 
-        let output: OrtOwnedTensor<f32, _> = outputs[0].try_extract().unwrap();
+        let output: &DynOrtTensor<ndarray::Dim<ndarray::IxDynImpl>> = &outputs[0];
         let mut probabilities: Vec<(usize, f32)> = output
+            .try_extract()
+            .unwrap()
             .view()
             .softmax(ndarray::Axis(1))
-            .into_iter()
+            .iter()
+            .copied()
             .enumerate()
             .collect::<Vec<_>>();
 
@@ -288,24 +295,27 @@ mod download {
             session.run(input_tensor_values).unwrap();
 
         assert_eq!(outputs.len(), 1);
-        let output: OrtOwnedTensor<'_, f32, ndarray::Dim<ndarray::IxDynImpl>> =
-            outputs[0].try_extract().unwrap();
+        let output = &outputs[0];
 
         // The image should have doubled in size
-        assert_eq!(output.view().shape(), [1, 448, 448, 3]);
+        assert_eq!(
+            output.try_extract::<f32>().unwrap().view().shape(),
+            [1, 448, 448, 3]
+        );
     }
 }
 
-fn get_imagenet_labels() -> Result<Vec<String>, io::Error> {
+fn get_imagenet_labels() -> Result<Vec<String>, OrtDownloadError> {
     // Download the ImageNet class labels, matching SqueezeNet's classes.
     let labels_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("synset.txt");
     if !labels_path.exists() {
         let url = "https://s3.amazonaws.com/onnx-model-zoo/synset.txt";
         println!("Downloading {:?} to {:?}...", url, labels_path);
         let resp = ureq::get(url)
-            .timeout_connect(1_000) // 1 second
             .timeout(Duration::from_secs(180)) // 3 minutes
-            .call();
+            .call()
+            .map_err(Box::new)
+            .map_err(OrtDownloadError::UreqError)?;
 
         assert!(resp.has("Content-Length"));
         let len = resp
@@ -325,5 +335,7 @@ fn get_imagenet_labels() -> Result<Vec<String>, io::Error> {
     }
     let file = BufReader::new(fs::File::open(labels_path).unwrap());
 
-    file.lines().collect()
+    file.lines()
+        .map(|line| line.map_err(|io_err| OrtDownloadError::IoError(io_err)))
+        .collect()
 }

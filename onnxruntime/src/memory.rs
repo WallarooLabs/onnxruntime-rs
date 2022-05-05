@@ -2,12 +2,12 @@ use tracing::debug;
 
 use onnxruntime_sys as sys;
 
+use tracing::error;
+
 use crate::{
     error::{assert_not_null_pointer, status_to_result, OrtError, Result},
     g_ort, AllocatorType, MemType,
 };
-
-use tracing::error;
 
 #[derive(Debug)]
 pub(crate) struct MemoryInfo {
@@ -52,7 +52,7 @@ impl Drop for MemoryInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_env_log::test;
+    use test_log::test;
 
     #[test]
     fn memory_info_constructor_destructor() {

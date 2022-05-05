@@ -33,7 +33,7 @@ pub use ort_tensor::OrtTensor;
 use crate::tensor::ort_owned_tensor::TensorPointerHolder;
 use crate::{error::call_ort, OrtError, Result};
 use onnxruntime_sys::{self as sys, OnnxEnumInt};
-use std::{convert::TryInto as _, ffi, fmt, ptr, rc, result, string};
+use std::{ffi, fmt, ptr, rc, result, string};
 
 // FIXME: Use https://docs.rs/bindgen/0.54.1/bindgen/struct.Builder.html#method.rustified_enum
 // FIXME: Add tests to cover the commented out types
@@ -76,11 +76,10 @@ pub enum TensorElementDataType {
     // Bfloat16 = sys::ONNXTensorElementDataType::ONNX_TENSOR_ELEMENT_DATA_TYPE_BFLOAT16 as OnnxEnumInt,
 }
 
-#[allow(clippy::from_over_into)]
-impl Into<sys::ONNXTensorElementDataType> for TensorElementDataType {
-    fn into(self) -> sys::ONNXTensorElementDataType {
+impl From<TensorElementDataType> for sys::ONNXTensorElementDataType {
+    fn from(val: TensorElementDataType) -> Self {
         use TensorElementDataType::*;
-        match self {
+        match val {
             Float => sys::ONNXTensorElementDataType::ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,
             Uint8 => sys::ONNXTensorElementDataType::ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT8,
             Int8 => sys::ONNXTensorElementDataType::ONNX_TENSOR_ELEMENT_DATA_TYPE_INT8,
@@ -324,7 +323,7 @@ impl TensorDataToType for String {
         tensor_ptr: rc::Rc<TensorPointerHolder>,
     ) -> Result<TensorData<'t, Self, D>> {
         // Total length of string data, not including \0 suffix
-        let mut total_length = 0_u64;
+        let mut total_length = 0_usize;
         unsafe {
             call_ort(|ort| {
                 ort.GetStringTensorDataLength.unwrap()(tensor_ptr.tensor_ptr, &mut total_length)
@@ -337,11 +336,10 @@ impl TensorDataToType for String {
         // don't seem to be written to in practice either.
         // If the string data actually did go farther, it would panic below when using the offset
         // data to get slices for each string.
-        let mut string_contents = vec![0_u8; total_length as usize];
+        let mut string_contents = vec![0_u8; total_length];
         // one extra slot so that the total length can go in the last one, making all per-string
         // length calculations easy
-        let mut offsets = vec![0_u64; tensor_element_len as usize + 1];
-
+        let mut offsets = vec![0_usize; tensor_element_len + 1];
         unsafe {
             call_ort(|ort| {
                 ort.GetStringTensorContent.unwrap()(
@@ -349,7 +347,7 @@ impl TensorDataToType for String {
                     string_contents.as_mut_ptr() as *mut ffi::c_void,
                     total_length,
                     offsets.as_mut_ptr(),
-                    tensor_element_len as u64,
+                    tensor_element_len,
                 )
             })
             .map_err(OrtError::GetStringTensorContent)?
@@ -364,8 +362,8 @@ impl TensorDataToType for String {
             // offsets has 1 extra offset past the end so that all windows work
             .windows(2)
             .map(|w| {
-                let start: usize = w[0].try_into().expect("Offset didn't fit into usize");
-                let next_start: usize = w[1].try_into().expect("Offset didn't fit into usize");
+                let start: usize = w[0];
+                let next_start: usize = w[1];
 
                 let slice = &string_contents[start..next_start];
                 String::from_utf8(slice.into())

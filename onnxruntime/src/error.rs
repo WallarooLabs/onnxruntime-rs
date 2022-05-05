@@ -118,7 +118,7 @@ pub enum OrtError {
     /// Ort pointer should not have been null
     #[error("{0} pointer should not be null")]
     PointerShouldNotBeNull(String),
-    /// Model has invalid dimensions
+    /// ONNX Model has invalid dimensions
     #[error("Invalid dimensions")]
     InvalidDimensions,
     /// The runtime type was undefined
@@ -187,6 +187,10 @@ pub enum OrtDownloadError {
     /// Generic input/output error
     #[error("Error downloading data to file: {0}")]
     IoError(#[from] io::Error),
+    #[cfg(feature = "model-fetching")]
+    /// Download error by ureq
+    #[error("Error downloading data to file: {0}")]
+    UreqError(#[from] Box<ureq::Error>),
     /// Error getting content-length from an HTTP GET request
     #[error("Error getting content-length")]
     ContentLengthError,
