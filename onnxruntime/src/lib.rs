@@ -188,8 +188,8 @@ fn g_ort() -> sys::OrtApi {
     unsafe { *api_ptr_mut }
 }
 
-fn char_p_to_string(raw: *const i8) -> Result<String> {
-    let c_string = unsafe { std::ffi::CStr::from_ptr(raw as *mut i8).to_owned() };
+fn char_p_to_string(raw: *const std::os::raw::c_char) -> Result<String> {
+    let c_string = unsafe { std::ffi::CStr::from_ptr(raw as *mut std::os::raw::c_char).to_owned() };
 
     match c_string.into_string() {
         Ok(string) => Ok(string),
@@ -241,10 +241,10 @@ mod onnxruntime {
         pub(crate) fn custom_logger(
             _params: *mut std::ffi::c_void,
             severity: sys::OrtLoggingLevel,
-            category: *const i8,
-            logid: *const i8,
-            code_location: *const i8,
-            message: *const i8,
+            category: *const std::os::raw::c_char,
+            logid: *const u8,
+            code_location: *const std::os::raw::c_char,
+            message: *const std::os::raw::c_char,
         ) {
             let log_level = match severity {
                 sys::OrtLoggingLevel::ORT_LOGGING_LEVEL_VERBOSE => Level::TRACE,
