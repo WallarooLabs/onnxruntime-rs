@@ -242,7 +242,7 @@ mod onnxruntime {
             _params: *mut std::ffi::c_void,
             severity: sys::OrtLoggingLevel,
             category: *const std::os::raw::c_char,
-            logid: *const u8,
+            logid: *const std::os::raw::c_char,
             code_location: *const std::os::raw::c_char,
             message: *const std::os::raw::c_char,
         ) {
