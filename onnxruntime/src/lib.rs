@@ -239,7 +239,7 @@ mod onnxruntime {
     extern_system_fn! {
         /// Callback from C that will handle the logging, forwarding the runtime's logs to the tracing crate.
         pub(crate) fn custom_logger(
-            _params: *mut std::ffi::c_void,
+            _params: *mut ::std::os::raw::c_void,
             severity: sys::OrtLoggingLevel,
             category: *const std::os::raw::c_char,
             logid: *const std::os::raw::c_char,
