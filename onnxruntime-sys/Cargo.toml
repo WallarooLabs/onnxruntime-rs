@@ -1,6 +1,6 @@
 [package]
 authors = ["Nicolas Bigaouette <nbigaouette@elementai.com>"]
-edition = "2018"
+edition = "2021"
 name = "onnxruntime-sys"
 version = "0.0.14"
 
@@ -17,7 +17,7 @@ keywords = ["neuralnetworks", "onnx", "bindings"]
 [dependencies]
 
 [build-dependencies]
-bindgen = {version = "0.59", optional = true}
+bindgen = { version = "0.59", optional = true }
 ureq = "2.1"
 
 # Used on Windows
