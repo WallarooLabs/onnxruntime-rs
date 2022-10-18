@@ -13,7 +13,7 @@ use std::{
 /// WARNING: If version is changed, bindings for all platforms will have to be re-generated.
 ///          To do so, run this:
 ///              cargo build --package onnxruntime-sys --features generate-bindings
-const ORT_VERSION: &str = "1.10.0";
+const ORT_VERSION: &str = "1.12.1";
 
 /// Base Url from which to download pre-built releases/
 const ORT_RELEASE_BASE_URL: &str = "https://github.com/microsoft/onnxruntime/releases/download";
@@ -178,7 +178,7 @@ fn extract_zip(filename: &Path, outpath: &Path) {
         let mut file = archive.by_index(i).unwrap();
         #[allow(deprecated)]
         let outpath = outpath.join(file.sanitized_name());
-        if !(&*file.name()).ends_with('/') {
+        if !(file.name()).ends_with('/') {
             println!(
                 "File {} extracted to \"{}\" ({} bytes)",
                 i,
