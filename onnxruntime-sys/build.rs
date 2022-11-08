@@ -280,13 +280,12 @@ enum Accelerator {
     Gpu,
 }
 
-impl FromStr for Accelerator {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "1" | "yes" | "true" | "on" => Ok(Accelerator::Gpu),
-            _ => Ok(Accelerator::None),
+impl Default for Accelerator {
+    fn default() -> Self {
+        if cfg!(feature = "gpu") {
+            Accelerator::Gpu
+        } else {
+            Accelerator::None
         }
     }
 }
@@ -363,7 +362,7 @@ fn prebuilt_archive_url() -> (PathBuf, String) {
             .expect("Unable to get TARGET_ARCH")
             .parse()
             .unwrap(),
-        accelerator: env::var(ORT_ENV_GPU).unwrap_or_default().parse().unwrap(),
+        accelerator: Accelerator::default(),
     };
 
     let prebuilt_archive = format!(

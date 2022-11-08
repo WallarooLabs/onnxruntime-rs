@@ -44,6 +44,7 @@ model-fetching = ["ureq"]
 # Disable build script; used for https://docs.rs
 disable-sys-build-script = ["onnxruntime-sys/disable-sys-build-script"]
 generate-bindings = ["onnxruntime-sys/generate-bindings"]
+gpu = ["onnxruntime-sys/gpu"]
 
 [package.metadata.docs.rs]
 features = ["disable-sys-build-script", "model-fetching"]
