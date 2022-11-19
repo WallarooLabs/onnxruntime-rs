@@ -28,8 +28,6 @@ const ORT_ENV_STRATEGY: &str = "ORT_STRATEGY";
 /// Name of environment variable that, if present, contains the location of a pre-built library.
 /// Only used if `ORT_STRATEGY=system`.
 const ORT_ENV_SYSTEM_LIB_LOCATION: &str = "ORT_LIB_LOCATION";
-/// Name of environment variable that, if present, controls wether to use CUDA or not.
-const ORT_ENV_GPU: &str = "ORT_USE_CUDA";
 
 /// Subdirectory (of the 'target' directory) into which to extract the prebuilt library.
 const ORT_PREBUILT_EXTRACT_DIR: &str = "onnxruntime";
@@ -54,7 +52,6 @@ fn main() {
     println!("cargo:rustc-link-search=native={}", lib_dir.display());
 
     println!("cargo:rerun-if-env-changed={}", ORT_ENV_STRATEGY);
-    println!("cargo:rerun-if-env-changed={}", ORT_ENV_GPU);
     println!("cargo:rerun-if-env-changed={}", ORT_ENV_SYSTEM_LIB_LOCATION);
 
     generate_bindings(&include_dir);

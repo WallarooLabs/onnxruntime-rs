@@ -126,6 +126,36 @@ impl<'a> SessionBuilder<'a> {
         Ok(self)
     }
 
+    /// Set the session to use cuda
+    // pub fn use_cpu(self, use_arena: i32) -> Result<SessionBuilder<'a>> {
+    //     unsafe {
+    //         g_ort().SessionOptionsAppendExecutionProvider_CPU(self.session_options_ptr, use_arena);
+    //     }
+    //     Ok(self)
+    // }
+
+    /// Set the session to use cuda
+    #[cfg(feature = "gpu")]
+    pub fn use_cuda(self, device_id: i32) -> Result<SessionBuilder<'a>> {
+        let opts = sys::OrtCUDAProviderOptions {
+            device_id,
+            cudnn_conv_algo_search: sys::OrtCudnnConvAlgoSearch::EXHAUSTIVE,
+            gpu_mem_limit: sys::SIZE_MAX as usize,
+            arena_extend_strategy: 0,
+            do_copy_in_default_stream: 1,
+            has_user_compute_stream: 0,
+            user_compute_stream: std::ptr::null_mut(),
+            default_memory_arena_cfg: std::ptr::null_mut(),
+        };
+        unsafe {
+            g_ort().SessionOptionsAppendExecutionProvider_CUDA.unwrap()(
+                self.session_options_ptr,
+                &opts,
+            );
+        }
+        Ok(self)
+    }
+
     /// Set the session's allocator
     ///
     /// Defaults to [`AllocatorType::Arena`](../enum.AllocatorType.html#variant.Arena)
