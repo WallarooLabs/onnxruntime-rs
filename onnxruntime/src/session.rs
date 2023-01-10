@@ -132,7 +132,7 @@ impl<'a> SessionBuilder<'a> {
         let opts = sys::OrtCUDAProviderOptions {
             device_id,
             cudnn_conv_algo_search: sys::OrtCudnnConvAlgoSearch::EXHAUSTIVE,
-            gpu_mem_limit: sys::SIZE_MAX as usize,
+            gpu_mem_limit: i32::MAX as usize,
             arena_extend_strategy: 0,
             do_copy_in_default_stream: 1,
             has_user_compute_stream: 0,
