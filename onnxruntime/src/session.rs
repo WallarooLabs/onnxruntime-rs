@@ -127,14 +127,6 @@ impl<'a> SessionBuilder<'a> {
     }
 
     /// Set the session to use cuda
-    // pub fn use_cpu(self, use_arena: i32) -> Result<SessionBuilder<'a>> {
-    //     unsafe {
-    //         g_ort().SessionOptionsAppendExecutionProvider_CPU(self.session_options_ptr, use_arena);
-    //     }
-    //     Ok(self)
-    // }
-
-    /// Set the session to use cuda
     #[cfg(feature = "gpu")]
     pub fn use_cuda(self, device_id: i32) -> Result<SessionBuilder<'a>> {
         let opts = sys::OrtCUDAProviderOptions {
