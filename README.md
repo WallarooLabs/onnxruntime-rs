@@ -58,7 +58,7 @@ To select which strategy to use, set the `ORT_STRATEGY` environment variable to:
 3. `compile`: To compile the library
 
 The `download` strategy supports downloading a version of ONNX that supports CUDA. To use this, set the
-environment variable `ORT_USE_CUDA=1` (only supports Linux or Windows).
+feature `gpu` in `Cargo.toml`.
 
 Until the build script allow compilation of the runtime, see the [compilation notes](ONNX_Compilation_Notes.md)
 for some details on the process.

@@ -82,21 +82,17 @@ jobs:
       # ******************************************************************
       - name: Download prebuilt archive (GPU, x86_64-unknown-linux-gnu)
         uses: actions-rs/cargo@v1
-        env:
-          ORT_USE_CUDA: "yes"
         with:
           command: build
-          args: --target x86_64-unknown-linux-gnu
+          args: --target x86_64-unknown-linux-gnu --features=gpu
       - name: Verify prebuilt archive downloaded (GPU, x86_64-unknown-linux-gnu)
         run: ls -lh target/x86_64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-gpu-1.*.tgz
       # ******************************************************************
       - name: Download prebuilt archive (GPU, x86_64-pc-windows-msvc)
         uses: actions-rs/cargo@v1
-        env:
-          ORT_USE_CUDA: "yes"
         with:
           command: build
-          args: --target x86_64-pc-windows-msvc
+          args: --target x86_64-pc-windows-msvc --features=gpu
       - name: Verify prebuilt archive downloaded (GPU, x86_64-pc-windows-msvc)
         run: ls -lh target/x86_64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x64-gpu-1.*.zip
 
