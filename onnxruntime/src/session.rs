@@ -25,7 +25,7 @@ use crate::{
     g_ort,
     memory::MemoryInfo,
     tensor::{DynOrtTensor, OrtTensor, TensorElementDataType, TypeToTensorElementDataType},
-    AllocatorType, GraphOptimizationLevel, MemType,
+    AllocatorType, ExecutionMode, GraphOptimizationLevel, MemType,
 };
 
 #[cfg(feature = "model-fetching")]
@@ -108,6 +108,42 @@ impl<'a> SessionBuilder<'a> {
             unsafe { g_ort().SetIntraOpNumThreads.unwrap()(self.session_options_ptr, num_threads) };
         status_to_result(status).map_err(OrtError::SessionOptions)?;
         assert_null_pointer(status, "SessionStatus")?;
+        Ok(self)
+    }
+
+    /// Options settings to match the Ampere AIO examples. So far, the important one
+    /// is selecting the execution provider.
+    pub fn with_aio_settings(self) -> Result<SessionBuilder<'a>> {
+        let mut ptr: *mut *mut ::std::os::raw::c_char = std::ptr::null_mut();
+        let mut len: i32 = 0;
+        unsafe {
+            g_ort().GetAvailableProviders.unwrap()(&mut ptr, &mut len);
+            g_ort().EnableCpuMemArena.unwrap()(self.session_options_ptr);
+            g_ort().EnableMemPattern.unwrap()(self.session_options_ptr);
+            g_ort().SetSessionExecutionMode.unwrap()(
+                self.session_options_ptr,
+                ExecutionMode::Sequential.into(),
+            );
+            g_ort().SetInterOpNumThreads.unwrap()(self.session_options_ptr, 1);
+        }
+
+        for i in 0..len {
+            unsafe {
+                let str = core::ffi::CStr::from_ptr(*ptr.offset(i as isize));
+                println!("{}: {}", i, str.to_string_lossy());
+            }
+        }
+
+        unsafe {
+            // TODO: Why device_id 1? Because ID 0 causes an assert with "use_arena" as
+            // the only description and 1 is used in the example. Waiting for an explanation.
+            let device_id: ::std::os::raw::c_int = 1;
+            crate::sys::OrtSessionOptionsAppendExecutionProvider_Aio(
+                self.session_options_ptr,
+                device_id,
+            );
+        }
+        println!("After with_aio_settings");
         Ok(self)
     }
 
@@ -267,9 +303,11 @@ impl<'a> SessionBuilder<'a> {
 
         let env_ptr: *const sys::OrtEnv = self.env.env_ptr();
 
+        println!("Monomorph.0");
         let status = unsafe {
             let model_data = model_bytes.as_ptr() as *const std::ffi::c_void;
             let model_data_length = model_bytes.len();
+            println!("Monomorph.1");
             g_ort().CreateSessionFromArray.unwrap()(
                 env_ptr,
                 model_data,
@@ -282,6 +320,7 @@ impl<'a> SessionBuilder<'a> {
         assert_null_pointer(status, "SessionStatus")?;
         assert_not_null_pointer(session_ptr, "Session")?;
 
+        println!("Monomorph.2");
         let mut allocator_ptr: *mut sys::OrtAllocator = std::ptr::null_mut();
         let status = unsafe { g_ort().GetAllocatorWithDefaultOptions.unwrap()(&mut allocator_ptr) };
         status_to_result(status).map_err(OrtError::Allocator)?;
@@ -289,6 +328,7 @@ impl<'a> SessionBuilder<'a> {
         assert_not_null_pointer(allocator_ptr, "Allocator")?;
 
         let memory_info = MemoryInfo::new(AllocatorType::Arena, MemType::Default)?;
+        println!("Monomorph.3");
 
         // Extract input and output properties
         let num_input_nodes = dangerous::extract_inputs_count(session_ptr)?;
@@ -300,6 +340,7 @@ impl<'a> SessionBuilder<'a> {
             .map(|i| dangerous::extract_output(session_ptr, allocator_ptr, i))
             .collect::<Result<Vec<Output>>>()?;
 
+        println!("Monomorph.4");
         Ok(Session {
             env: self.env,
             session_ptr,
