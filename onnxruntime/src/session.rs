@@ -113,6 +113,7 @@ impl<'a> SessionBuilder<'a> {
 
     /// Options settings to match the Ampere AIO examples. So far, the important one
     /// is selecting the execution provider.
+    #[cfg(feature = "aio")]
     pub fn with_aio_settings(self) -> Result<SessionBuilder<'a>> {
         let mut ptr: *mut *mut ::std::os::raw::c_char = std::ptr::null_mut();
         let mut len: i32 = 0;
@@ -303,11 +304,9 @@ impl<'a> SessionBuilder<'a> {
 
         let env_ptr: *const sys::OrtEnv = self.env.env_ptr();
 
-        println!("Monomorph.0");
         let status = unsafe {
             let model_data = model_bytes.as_ptr() as *const std::ffi::c_void;
             let model_data_length = model_bytes.len();
-            println!("Monomorph.1");
             g_ort().CreateSessionFromArray.unwrap()(
                 env_ptr,
                 model_data,
@@ -320,7 +319,6 @@ impl<'a> SessionBuilder<'a> {
         assert_null_pointer(status, "SessionStatus")?;
         assert_not_null_pointer(session_ptr, "Session")?;
 
-        println!("Monomorph.2");
         let mut allocator_ptr: *mut sys::OrtAllocator = std::ptr::null_mut();
         let status = unsafe { g_ort().GetAllocatorWithDefaultOptions.unwrap()(&mut allocator_ptr) };
         status_to_result(status).map_err(OrtError::Allocator)?;
@@ -328,7 +326,6 @@ impl<'a> SessionBuilder<'a> {
         assert_not_null_pointer(allocator_ptr, "Allocator")?;
 
         let memory_info = MemoryInfo::new(AllocatorType::Arena, MemType::Default)?;
-        println!("Monomorph.3");
 
         // Extract input and output properties
         let num_input_nodes = dangerous::extract_inputs_count(session_ptr)?;
@@ -340,7 +337,6 @@ impl<'a> SessionBuilder<'a> {
             .map(|i| dangerous::extract_output(session_ptr, allocator_ptr, i))
             .collect::<Result<Vec<Output>>>()?;
 
-        println!("Monomorph.4");
         Ok(Session {
             env: self.env,
             session_ptr,

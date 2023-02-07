@@ -16,3 +16,12 @@ include!(concat!(
 pub type OnnxEnumInt = i32;
 #[cfg(not(target_os = "windows"))]
 pub type OnnxEnumInt = u32;
+
+/// Ampere AIO-specific provider
+#[cfg(all(target_os = "linux", target_arch = "aarch64", feature = "aio"))]
+extern "C" {
+    pub fn OrtSessionOptionsAppendExecutionProvider_Aio(
+        options: *mut OrtSessionOptions,
+        device_id: ::std::os::raw::c_int,
+    ) -> OrtStatusPtr;
+}

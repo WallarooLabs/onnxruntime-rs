@@ -45,6 +45,9 @@ model-fetching = ["ureq"]
 disable-sys-build-script = ["onnxruntime-sys/disable-sys-build-script"]
 generate-bindings = ["onnxruntime-sys/generate-bindings"]
 gpu = ["onnxruntime-sys/gpu"]
+# Enables the Ampere AIO accelerations on Arm builds
+aio = ["onnxruntime-sys/aio"]
+
 
 [package.metadata.docs.rs]
 features = ["disable-sys-build-script", "model-fetching"]

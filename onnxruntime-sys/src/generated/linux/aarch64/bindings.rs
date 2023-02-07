@@ -6517,10 +6517,6 @@ fn bindgen_test_layout_OrtApi() {
             stringify!(SessionOptionsAppendExecutionProvider_CUDA)
         )
     );
-    let mut session_options_ptr: *mut OrtSessionOptions = std::ptr::null_mut();
-    unsafe {
-        OrtSessionOptionsAppendExecutionProvider_Aio(session_options_ptr, 0);
-    }
     assert_eq!(
         unsafe {
             &(*(::std::ptr::null::<OrtApi>())).SessionOptionsAppendExecutionProvider_ROCM
@@ -7297,12 +7293,6 @@ fn bindgen_test_layout_OrtCustomOp() {
 }
 extern "C" {
     pub fn OrtSessionOptionsAppendExecutionProvider_CUDA(
-        options: *mut OrtSessionOptions,
-        device_id: ::std::os::raw::c_int,
-    ) -> OrtStatusPtr;
-}
-extern "C" {
-    pub fn OrtSessionOptionsAppendExecutionProvider_Aio(
         options: *mut OrtSessionOptions,
         device_id: ::std::os::raw::c_int,
     ) -> OrtStatusPtr;
