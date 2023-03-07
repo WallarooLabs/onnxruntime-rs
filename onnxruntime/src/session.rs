@@ -131,7 +131,6 @@ impl<'a> SessionBuilder<'a> {
         for i in 0..len {
             unsafe {
                 let str = core::ffi::CStr::from_ptr(*ptr.offset(i as isize));
-                println!("{}: {}", i, str.to_string_lossy());
             }
         }
 
@@ -144,7 +143,6 @@ impl<'a> SessionBuilder<'a> {
                 device_id,
             );
         }
-        println!("After with_aio_settings");
         Ok(self)
     }
 
