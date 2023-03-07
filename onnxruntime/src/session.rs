@@ -25,7 +25,7 @@ use crate::{
     g_ort,
     memory::MemoryInfo,
     tensor::{DynOrtTensor, OrtTensor, TensorElementDataType, TypeToTensorElementDataType},
-    AllocatorType, GraphOptimizationLevel, MemType,
+    AllocatorType, ExecutionMode, GraphOptimizationLevel, MemType,
 };
 
 #[cfg(feature = "model-fetching")]
@@ -108,6 +108,41 @@ impl<'a> SessionBuilder<'a> {
             unsafe { g_ort().SetIntraOpNumThreads.unwrap()(self.session_options_ptr, num_threads) };
         status_to_result(status).map_err(OrtError::SessionOptions)?;
         assert_null_pointer(status, "SessionStatus")?;
+        Ok(self)
+    }
+
+    /// Options settings to match the Ampere AIO examples. So far, the important one
+    /// is selecting the execution provider.
+    #[cfg(feature = "aio")]
+    pub fn with_aio_settings(self) -> Result<SessionBuilder<'a>> {
+        let mut ptr: *mut *mut ::std::os::raw::c_char = std::ptr::null_mut();
+        let mut len: i32 = 0;
+        unsafe {
+            g_ort().GetAvailableProviders.unwrap()(&mut ptr, &mut len);
+            g_ort().EnableCpuMemArena.unwrap()(self.session_options_ptr);
+            g_ort().EnableMemPattern.unwrap()(self.session_options_ptr);
+            g_ort().SetSessionExecutionMode.unwrap()(
+                self.session_options_ptr,
+                ExecutionMode::Sequential.into(),
+            );
+            g_ort().SetInterOpNumThreads.unwrap()(self.session_options_ptr, 1);
+        }
+
+        for i in 0..len {
+            unsafe {
+                let str = core::ffi::CStr::from_ptr(*ptr.offset(i as isize));
+            }
+        }
+
+        unsafe {
+            // TODO: Why device_id 1? Because ID 0 causes an assert with "use_arena" as
+            // the only description and 1 is used in the example. Waiting for an explanation.
+            let device_id: ::std::os::raw::c_int = 1;
+            crate::sys::OrtSessionOptionsAppendExecutionProvider_Aio(
+                self.session_options_ptr,
+                device_id,
+            );
+        }
         Ok(self)
     }
 

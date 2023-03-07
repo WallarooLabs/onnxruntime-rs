@@ -30,6 +30,8 @@ tar = "0.4"
 [features]
 default = []
 gpu = []
+# Enables the Ampere AIO accelerations on Arm builds
+aio = []
 
 # Disable build script, used to prevent issues with docs.rs
 disable-sys-build-script = []

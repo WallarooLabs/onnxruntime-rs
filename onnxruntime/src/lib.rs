@@ -350,6 +350,24 @@ impl From<GraphOptimizationLevel> for sys::GraphOptimizationLevel {
     }
 }
 
+#[derive(Debug)]
+#[cfg_attr(not(windows), repr(u32))]
+#[cfg_attr(windows, repr(i32))]
+pub enum ExecutionMode {
+    Sequential = sys::ExecutionMode::ORT_SEQUENTIAL as OnnxEnumInt,
+    Parallel = sys::ExecutionMode::ORT_PARALLEL as OnnxEnumInt,
+}
+
+impl From<ExecutionMode> for sys::ExecutionMode {
+    fn from(level: ExecutionMode) -> sys::ExecutionMode {
+        use ExecutionMode::*;
+        match level {
+            Sequential => sys::ExecutionMode::ORT_SEQUENTIAL,
+            Parallel => sys::ExecutionMode::ORT_PARALLEL,
+        }
+    }
+}
+
 /// Allocator type
 #[derive(Debug, Clone)]
 #[repr(i32)]
