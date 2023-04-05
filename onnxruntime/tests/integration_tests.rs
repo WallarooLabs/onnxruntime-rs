@@ -15,7 +15,9 @@ mod download {
     use test_log::test;
 
     use onnxruntime::{
-        download::vision::{DomainBasedImageClassification, ImageClassification},
+        download::vision::{
+            DomainBasedImageClassification, ImageClassification, ObjectDetectionImageSegmentation,
+        },
         environment::Environment,
         tensor::{ndarray_tensor::NdArrayTensor, DynOrtTensor},
         GraphOptimizationLevel, LoggingLevel,
@@ -302,6 +304,74 @@ mod download {
             output.try_extract::<f32>().unwrap().view().shape(),
             [1, 448, 448, 3]
         );
+    }
+
+    #[test]
+    fn frcnn_zero_object_detections() {
+        const IMAGE_TO_LOAD: &str = "water.jpeg";
+
+        let environment = Environment::builder()
+            .with_name("integration_test")
+            .with_log_level(LoggingLevel::Warning)
+            .build()
+            .unwrap();
+
+        let mut session = environment
+            .new_session_builder()
+            .unwrap()
+            .with_optimization_level(GraphOptimizationLevel::Basic)
+            .unwrap()
+            .with_number_threads(1)
+            .unwrap()
+            .with_model_downloaded(ObjectDetectionImageSegmentation::FasterRcnn)
+            .expect("Could not download model file");
+
+        let input0_shape: Vec<Option<usize>> = session.inputs[0].dimensions().collect();
+        let output0_shape: Vec<Option<usize>> = session.outputs[0].dimensions().collect();
+        let output1_shape: Vec<Option<usize>> = session.outputs[1].dimensions().collect();
+        let output2_shape: Vec<Option<usize>> = session.outputs[2].dimensions().collect();
+
+        assert_eq!(input0_shape, [Some(3), None, None]);
+        assert_eq!(output0_shape, [None, Some(4)]);
+        assert_eq!(output1_shape, [None]);
+        assert_eq!(output2_shape, [None]);
+
+        let image_buffer: ImageBuffer<Rgb<u8>, Vec<u8>> = image::open(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("tests")
+                .join("data")
+                .join(IMAGE_TO_LOAD),
+        )
+        .unwrap()
+        .resize(640, 480, FilterType::Nearest)
+        .to_rgb8();
+
+        let array = ndarray::Array::from_shape_fn((3, 480, 640), |(c, j, i)| {
+            let pixel = image_buffer.get_pixel(i as u32, j as u32);
+            let channels = pixel.channels();
+
+            // range [0, 255] -> range [0, 1]
+            (channels[c] as f32) / 255.0
+        });
+
+        // // Perform the inference
+        let outputs: Vec<DynOrtTensor<ndarray::Dim<ndarray::IxDynImpl>>> =
+            session.run(vec![array]).unwrap();
+
+        assert_eq!(outputs.len(), 3);
+
+        let boxes = &outputs[0];
+        let labels = &outputs[1];
+        let scores = &outputs[2];
+
+        // There should be 0 bounding boxes
+        assert_eq!(boxes.try_extract::<f32>().unwrap().view().shape(), [0, 4]);
+
+        // There should be 0 labels
+        assert_eq!(labels.try_extract::<i64>().unwrap().view().shape(), [0]);
+
+        // There should be 0 scores
+        assert_eq!(scores.try_extract::<f32>().unwrap().view().shape(), [0]);
     }
 }
 

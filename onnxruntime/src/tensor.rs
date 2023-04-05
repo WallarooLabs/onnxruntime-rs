@@ -295,10 +295,14 @@ where
         })
     }
     .map_err(OrtError::GetTensorMutableData)?;
-    assert_ne!(output_array_ptr, ptr::null_mut());
-
-    let array_view = unsafe { ndarray::ArrayView::from_shape_ptr(shape, output_array_ptr) };
-    Ok(array_view)
+    if shape.size() != 0 {
+        assert_ne!(output_array_ptr, ptr::null_mut());
+        let array_view = unsafe { ndarray::ArrayView::from_shape_ptr(shape, output_array_ptr) };
+        Ok(array_view)
+    } else {
+        let array_view = ndarray::ArrayView::from_shape(shape, &[]).unwrap();
+        Ok(array_view)
+    }
 }
 
 impl_prim_type_from_ort_trait!(f32, Float);
