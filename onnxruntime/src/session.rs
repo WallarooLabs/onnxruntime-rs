@@ -166,7 +166,7 @@ impl<'a> SessionBuilder<'a> {
     pub fn use_cuda(self, device_id: i32) -> Result<SessionBuilder<'a>> {
         let opts = sys::OrtCUDAProviderOptions {
             device_id,
-            cudnn_conv_algo_search: sys::OrtCudnnConvAlgoSearch::EXHAUSTIVE,
+            cudnn_conv_algo_search: sys::OrtCudnnConvAlgoSearch::OrtCudnnConvAlgoSearchExhaustive,
             gpu_mem_limit: i32::MAX as usize,
             arena_extend_strategy: 0,
             do_copy_in_default_stream: 1,
