@@ -85,6 +85,7 @@ fn generate_bindings(include_dir: &Path) {
                 .join("session")
                 .display()
         ),
+        format!("-I{}", include_dir.join("onnxruntime").join("core").join("providers").join("cpu").display()),
     ];
 
     // Tell cargo to invalidate the built crate whenever the wrapper changes
@@ -203,6 +204,7 @@ enum Architecture {
     X86_64,
     Arm,
     Arm64,
+    PowerPC64,
 }
 
 impl FromStr for Architecture {
@@ -214,6 +216,7 @@ impl FromStr for Architecture {
             "x86_64" => Ok(Architecture::X86_64),
             "arm" => Ok(Architecture::Arm),
             "aarch64" => Ok(Architecture::Arm64),
+            "powerpc64" => Ok(Architecture::PowerPC64),
             _ => Err(format!("Unsupported architecture: {}", s)),
         }
     }
@@ -226,6 +229,7 @@ impl OnnxPrebuiltArchive for Architecture {
             Architecture::X86_64 => Cow::from("x64"),
             Architecture::Arm => Cow::from("arm"),
             Architecture::Arm64 => Cow::from("arm64"),
+            Architecture::PowerPC64 => Cow::from("ppc64"),
         }
     }
 }

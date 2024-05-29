@@ -33,3 +33,9 @@ include!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/src/generated/windows/x86_64/bindings.rs"
 ));
+
+#[cfg(all(target_os = "linux", target_arch = "powerpc64"))]
+include!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/src/generated/linux/powerpc64/bindings.rs"
+));
