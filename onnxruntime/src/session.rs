@@ -554,20 +554,12 @@ impl<'a> Session<'a> {
             g_ort().GetAvailableProviders.unwrap()(&mut ptr, &mut len);
         }
 
-        let providers = (0..len)
+        (0..len)
             .map(|i| unsafe {
                 let str = core::ffi::CStr::from_ptr(*ptr.offset(i as isize));
                 str.to_string_lossy().to_string()
             })
-            .collect();
-
-        for i in 0..len {
-            unsafe {
-                let str = core::ffi::CStr::from_ptr(*ptr.offset(i as isize));
-            }
-        }
-
-        providers
+            .collect()
     }
 
     // pub fn tensor_from_array<'a, 'b, T, D>(&'a self, array: Array<T, D>) -> Tensor<'b, T, D>
