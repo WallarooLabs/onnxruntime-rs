@@ -13,7 +13,7 @@ use std::{
 /// WARNING: If version is changed, bindings for all platforms will have to be re-generated.
 ///          To do so, run this:
 ///              cargo build --package onnxruntime-sys --features generate-bindings
-const ORT_VERSION: &str = "1.13.1";
+const ORT_VERSION: &str = "1.15.1";
 
 /// Base Url from which to download pre-built releases/
 const ORT_RELEASE_BASE_URL: &str = "https://github.com/microsoft/onnxruntime/releases/download";
@@ -85,7 +85,15 @@ fn generate_bindings(include_dir: &Path) {
                 .join("session")
                 .display()
         ),
-        format!("-I{}", include_dir.join("onnxruntime").join("core").join("providers").join("cpu").display()),
+        format!(
+            "-I{}",
+            include_dir
+                .join("onnxruntime")
+                .join("core")
+                .join("providers")
+                .join("cpu")
+                .display()
+        ),
     ];
 
     // Tell cargo to invalidate the built crate whenever the wrapper changes
