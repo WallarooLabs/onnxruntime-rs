@@ -176,6 +176,8 @@ impl<'a> SessionBuilder<'a> {
             has_user_compute_stream: 0,
             user_compute_stream: std::ptr::null_mut(),
             default_memory_arena_cfg: std::ptr::null_mut(),
+            tunable_op_enable: 0,
+            tunable_op_tuning_enable: 0,
         };
         unsafe {
             g_ort().SessionOptionsAppendExecutionProvider_CUDA.unwrap()(
