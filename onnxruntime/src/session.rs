@@ -545,6 +545,23 @@ impl<'a> Session<'a> {
         outputs
     }
 
+    // Returns a vector of all available providers for reporting / debugging
+    // purposes.
+    pub fn get_available_providers(&self) -> Vec<String> {
+        let mut ptr: *mut *mut ::std::os::raw::c_char = std::ptr::null_mut();
+        let mut len: i32 = 0;
+        unsafe {
+            g_ort().GetAvailableProviders.unwrap()(&mut ptr, &mut len);
+        }
+
+        (0..len)
+            .map(|i| unsafe {
+                let str = core::ffi::CStr::from_ptr(*ptr.offset(i as isize));
+                str.to_string_lossy().to_string()
+            })
+            .collect()
+    }
+
     // pub fn tensor_from_array<'a, 'b, T, D>(&'a self, array: Array<T, D>) -> Tensor<'b, T, D>
     // where
     //     'a: 'b, // 'a outlives 'b
