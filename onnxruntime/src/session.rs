@@ -166,9 +166,6 @@ impl<'a> SessionBuilder<'a> {
     pub fn use_cuda(self, device_id: i32) -> Result<SessionBuilder<'a>> {
         let opts = sys::OrtCUDAProviderOptions {
             device_id,
-            #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
-            cudnn_conv_algo_search: sys::OrtCudnnConvAlgoSearch::EXHAUSTIVE,
-            #[cfg(not(all(target_arch = "x86_64", target_os = "linux")))]
             cudnn_conv_algo_search: sys::OrtCudnnConvAlgoSearch::OrtCudnnConvAlgoSearchExhaustive,
             gpu_mem_limit: i32::MAX as usize,
             arena_extend_strategy: 0,
@@ -176,6 +173,9 @@ impl<'a> SessionBuilder<'a> {
             has_user_compute_stream: 0,
             user_compute_stream: std::ptr::null_mut(),
             default_memory_arena_cfg: std::ptr::null_mut(),
+            tunable_op_enable: 0,
+            tunable_op_tuning_enable: 0,
+            tunable_op_max_tuning_duration_ms: 0,
         };
         unsafe {
             g_ort().SessionOptionsAppendExecutionProvider_CUDA.unwrap()(
